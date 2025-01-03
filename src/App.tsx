@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import classNames from 'classnames';
 
 import { UserWarning } from './UserWarning';
@@ -22,6 +22,9 @@ export const App: React.FC = () => {
   const [newTodo, setNewTodo] = useState<string>('');
   const [isInputDisabled, setIsInputDisabled] = useState(false);
   const [loadingTodoId, setLoadingTodoId] = useState<number | null>(null);
+  const [pendingTodos, setPendingTodos] = useState<Todo[]>([]);
+
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const loadTodos = async () => {
@@ -61,7 +64,7 @@ export const App: React.FC = () => {
   });
 
   const activeCount = todos.reduce(
-    (count, todo) => (todo.completed ? count : count + 1),
+    (count, todo) => (!todo.completed && todo.id > 0 ? count + 1 : count),
     0,
   );
 
@@ -83,7 +86,7 @@ export const App: React.FC = () => {
       userId: USER_ID,
     };
 
-    setTodos([...todos, tempTodoToAdd]);
+    setPendingTodos([...pendingTodos, tempTodoToAdd]);
     setLoadingTodoId(tempId);
     setIsInputDisabled(true);
 
@@ -94,13 +97,17 @@ export const App: React.FC = () => {
         userId: USER_ID,
       });
 
-      setTodos(currentTodos =>
-        currentTodos.map(todo => (todo.id === tempId ? addedTodo : todo)),
+      setTodos(currentTodos => [...currentTodos, addedTodo]);
+      setPendingTodos(currentPendingTodos =>
+        currentPendingTodos.filter(todo => todo.id !== tempId),
       );
       setNewTodo('');
+      inputRef?.current?.focus();
     } catch {
       setErrorMessage('Unable to add a todo');
-      setTodos(currentTodos => currentTodos.filter(todo => todo.id !== tempId));
+      setPendingTodos(currentPendingTodos =>
+        currentPendingTodos.filter(todo => todo.id !== tempId),
+      );
     } finally {
       setLoadingTodoId(null);
       setIsInputDisabled(false);
@@ -116,6 +123,7 @@ export const App: React.FC = () => {
       setTodos(currentTodos => currentTodos.filter(todo => todo.id !== todoId));
     } catch {
       setErrorMessage('Unable to delete a todo');
+      inputRef?.current?.focus();
     } finally {
       setLoadingTodoId(null);
     }
@@ -159,11 +167,11 @@ export const App: React.FC = () => {
           setNewTitle={setNewTodo}
           onSubmit={addTodo}
           isInputDisabled={isInputDisabled}
-          todos={todos}
+          inputRef={inputRef}
         />
 
         <TodoList
-          filteredTodos={filteredTodos}
+          filteredTodos={[...filteredTodos, ...pendingTodos]}
           loadingTodoId={loadingTodoId}
           deleteTodo={deleteTodo}
         />

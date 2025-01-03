@@ -1,12 +1,11 @@
-import React, { useEffect, useRef } from 'react';
-import { Todo } from '../types/Todo';
+import React from 'react';
 
 interface Props {
   newTitle: string;
   setNewTitle: (title: string) => void;
   onSubmit: (event: React.FormEvent) => void;
   isInputDisabled: boolean;
-  todos: Todo[];
+  inputRef: React.RefObject<HTMLInputElement>;
 }
 
 export const Header: React.FC<Props> = ({
@@ -14,16 +13,8 @@ export const Header: React.FC<Props> = ({
   setNewTitle,
   onSubmit,
   isInputDisabled,
-  todos,
+  inputRef,
 }) => {
-  const newTodoInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (newTodoInputRef.current && !isInputDisabled) {
-      newTodoInputRef.current.focus();
-    }
-  }, [todos, isInputDisabled]);
-
   return (
     <header className="todoapp__header">
       <button
@@ -40,6 +31,7 @@ export const Header: React.FC<Props> = ({
           value={newTitle}
           onChange={event => setNewTitle(event.target.value)}
           autoFocus
+          ref={inputRef}
           disabled={isInputDisabled}
         />
       </form>
