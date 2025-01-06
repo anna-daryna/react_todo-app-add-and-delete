@@ -52,6 +52,12 @@ export const App: React.FC = () => {
     return undefined;
   }, [errorMessage]);
 
+  useEffect(() => {
+    if (!isInputDisabled) {
+      inputRef?.current?.focus();
+    }
+  }, [isInputDisabled]);
+
   const filteredTodos = todos.filter(todo => {
     switch (statusFilter) {
       case TodoStatus.Active:
@@ -102,7 +108,6 @@ export const App: React.FC = () => {
         currentPendingTodos.filter(todo => todo.id !== tempId),
       );
       setNewTodo('');
-      inputRef?.current?.focus();
     } catch {
       setErrorMessage('Unable to add a todo');
       setPendingTodos(currentPendingTodos =>
@@ -111,6 +116,7 @@ export const App: React.FC = () => {
     } finally {
       setLoadingTodoId(null);
       setIsInputDisabled(false);
+      inputRef?.current?.focus();
     }
   };
 
@@ -123,14 +129,15 @@ export const App: React.FC = () => {
       setTodos(currentTodos => currentTodos.filter(todo => todo.id !== todoId));
     } catch {
       setErrorMessage('Unable to delete a todo');
-      inputRef?.current?.focus();
     } finally {
       setLoadingTodoId(null);
+      inputRef?.current?.focus();
     }
   };
 
   const clearCompletedTodos = async () => {
     const completedTodos = todos.filter(todo => todo.completed);
+    let errorOccurred = false;
 
     try {
       await Promise.all(
@@ -142,12 +149,19 @@ export const App: React.FC = () => {
               currentTodos.filter(currentTodo => currentTodo.id !== todo.id),
             );
           } catch {
-            setErrorMessage(`Unable to delete todo: ${todo.title}`);
+            setErrorMessage('Unable to delete a todo');
+            errorOccurred = true;
           }
         }),
       );
     } catch {
       setErrorMessage('Error occurred while clearing completed todos.');
+    } finally {
+      if (!errorOccurred) {
+        setErrorMessage(null);
+      }
+
+      inputRef?.current?.focus();
     }
   };
 
